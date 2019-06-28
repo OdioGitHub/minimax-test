@@ -220,7 +220,7 @@ def render(state, c_choice, h_choice):
         +1: c_choice,
         0: ' '
     }
-    str_line = '---------------'
+    str_line = '--------------------'
 
     print('\n' + str_line)
     for row in state:
