@@ -4,6 +4,7 @@ from random import choice
 import platform
 import time
 from os import system
+from threading import Timer
 
 """
 WARNING: the code that follows will make you cry
@@ -161,7 +162,7 @@ def set_move(x, y, player):
         return False
 
 
-def minimax(state, depth, player, cont):
+def minimax(state, depth, player):
     """
     AI function that choice the best move
     :param state: current state of the board
@@ -170,6 +171,7 @@ def minimax(state, depth, player, cont):
     :param player: an human or a computer
     :return: a list with [the best row, best col, best score]
     """
+
     if player == COMP:
         best = [-1, -1, -infinity]
     else:
@@ -180,22 +182,18 @@ def minimax(state, depth, player, cont):
         return [-1, -1, score]
 
     for cell in empty_cells(state):
-        cont = cont + 1
-        if cont <= 30:
-            x, y = cell[0], cell[1]
-            state[x][y] = player
-            score = minimax(state, depth - 1, -player, cont)
-            state[x][y] = 0
-            score[0], score[1] = x, y
+        x, y = cell[0], cell[1]
+        state[x][y] = player
+        score = minimax(state, depth - 1, -player)
+        state[x][y] = 0
+        score[0], score[1] = x, y
 
-            if player == COMP:
-                if score[2] > best[2]:
-                    best = score  # max value
-            else:
-                if score[2] < best[2]:
-                    best = score  # min value
+        if player == COMP:
+            if score[2] > best[2]:
+                best = score  # max value
         else:
-            return best
+            if score[2] < best[2]:
+                best = score  # min value
 
     return best
 
@@ -252,8 +250,7 @@ def ai_turn(c_choice, h_choice):
         x = choice([0, 1, 2])
         y = choice([0, 1, 2])
     else:
-        cont = 0
-        move = minimax(board, 5, COMP, cont)
+        move = minimax(board, 6, COMP)
         x, y = move[0], move[1]
 
     set_move(x, y, COMP)
