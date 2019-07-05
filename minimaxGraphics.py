@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-from math import inf as infinity
+from math import inf as infinity, sqrt
 from random import choice
 import platform
 import time
 from os import system
+import pygame
+
+
 from threading import Timer
 
 """
@@ -56,6 +59,100 @@ WARNING: the code that follows will make you cry
                                     `+++++++++´                                                     
 """
 
+class circle:
+    center: (int, int)
+    radius: int
+    color: (int, int, int)
+    _has_piece_: bool
+
+    def __init__(self, x: int, y: int, r: int):
+        self.center = (x + r, y + r)  # Assumes the top-left coordenates.
+        self.radius = r
+        self.color = (255, 255, 255)
+
+    def is_in_range(self, x: int, y: int) -> bool:
+        x_diff_squared = pow(self.center[0] - x, 2)
+        y_diff_squared = pow(self.center[1] - y, 2)
+        return sqrt(x_diff_squared + y_diff_squared) < self.radius
+
+    def set_piece(self, value: bool):
+        self._has_piece_ = value
+
+
+
+
+class Board:
+    color = (0, 0, 0)
+    area = pygame.Rect(0, 0, 0, 0)
+
+    piecePositions = []
+
+    humanColor: (int, int, int)
+    aiColor: (int,  int,  int)
+    __humanChar: str
+    __aiChar: str
+
+    def __init__(self):
+        #   X   Y
+        # X  Y
+        self.area = pygame.Rect(50, 50,  ## Coord
+                                300, 300)  ## Size
+
+        self.piecePositions = []
+
+        circle_radius = min(self.area.height, self.area.width) // 8
+        for circle_x in range(self.area.left, self.area.right, self.area.width // 4):
+            for circle_y in range(self.area.top, self.area.bottom, self.area.height // 4):
+                self.piecePositions.append(circle(circle_x, circle_y, circle_radius))
+
+    def render_board(self, h_choice, c_choice):
+        index = 0
+        for i in board:
+            for j in i:
+                clr = ()
+                if j == -1:
+                    clr = self.humanColor
+                    print("if human")
+                elif j == 1:
+
+                    clr = self.aiColor
+                    print("if comp")
+                else:
+                    clr = (255, 255, 255)
+                print(clr)
+                self.piecePositions[index].color = clr
+                print(self.piecePositions[index].color)
+                index = index + 1
+
+    def draw(self):
+        pygame.draw.rect(gameScreen, (0, 0, 0), self.area)
+
+        for i in self.piecePositions:
+            pygame.draw.circle(gameScreen, i.color, i.center, i.radius, 0)
+
+    def in_range_of(self, pos):
+        acc = 0
+        for c in self.piecePositions:
+            if c.is_in_range(pos[0], pos[1]):
+                return acc
+            acc += 1
+        return -1
+
+    def set_player_color(self, p):
+        self.__humanChar = p
+
+        if p == "R":
+            self.__aiChar = "B"
+            self.humanColor = (255, 0, 0)
+            self.aiColor = (0, 0, 255)
+        else:
+            self.__aiChar = "R"
+            self.humanColor = (0, 0, 255)
+            self.aiColor = (255, 0, 0)
+        print(self.humanColor, " ", self.aiColor, "  " ,self.__humanChar, " ", self.__aiChar)
+
+
+
 HUMAN = -1
 COMP = +1
 board = [
@@ -64,6 +161,11 @@ board = [
     [0, 0, 0, 0],
     [0, 0, 0, 0],
 ]
+graphicalBoard: Board = Board()
+
+
+
+gameScreen = pygame.display.set_mode((1024, 600))
 
 
 def evaluate(state):
@@ -244,7 +346,7 @@ def ai_turn(c_choice, h_choice):
 
     clean()
     print(f'Computer turn [{c_choice}]')
-    render(board, c_choice, h_choice)
+
 
     if depth == 16:
         x = choice([0, 1, 2, 3])
@@ -257,6 +359,7 @@ def ai_turn(c_choice, h_choice):
     time.sleep(1)
 
 
+
 def human_turn(c_choice, h_choice):
     """
     The Human plays choosing a valid move.
@@ -264,7 +367,7 @@ def human_turn(c_choice, h_choice):
     :param h_choice: human's choice X or O
     :return:
     """
-    depth = len((board))
+    depth = len(empty_cells(board))
     if depth == 0 or game_over(board):
         return
 
@@ -297,20 +400,37 @@ def human_turn(c_choice, h_choice):
             print('Bad choice')
 
 
+def index_to_coord(index):
+    moves = {
+        1: [0, 0], 2: [0, 1], 3: [0, 2], 4: [0, 3],
+        5: [1, 0], 6: [1, 1], 7: [1, 2], 8: [1, 3],
+        9: [2, 0], 10: [2, 1], 11: [2, 2], 12: [2, 3],
+        13: [3, 0], 14: [3, 1], 15: [3, 2], 16: [3, 3],
+    }
+    print(index + 1)
+    z = moves[index + 1]
+    print(z)
+    return z
+
+
 def main():
     """
     Main function that calls all functions
     """
+
+
+
+
     clean()
     h_choice = ''  # X or O
     c_choice = ''  # X or O
     first = ''  # if human is the first
 
     # Human chooses X or O to play
-    while h_choice != 'O' and h_choice != 'X':
+    while h_choice != 'R' and h_choice != 'B':
         try:
             print('')
-            h_choice = input('Choose X or O\nChosen: ').upper()
+            h_choice = input('Choose R or B\nChosen: ').upper()
         except (EOFError, KeyboardInterrupt):
             print('Bye')
             exit()
@@ -318,10 +438,11 @@ def main():
             print('Bad choice')
 
     # Setting computer's choice
-    if h_choice == 'X':
-        c_choice = 'O'
+    graphicalBoard.set_player_color(h_choice)
+    if h_choice == 'R':
+        c_choice = 'B'
     else:
-        c_choice = 'X'
+        c_choice = 'R'
 
     # Human may starts first
     clean()
@@ -334,14 +455,41 @@ def main():
         except (KeyError, ValueError):
             print('Bad choice')
 
+
+
+    gameScreen.fill((255, 255, 255))
+    graphicalBoard.draw()
+
+    if first == 'N':
+        ai_turn(c_choice, h_choice)
+        first = ''
+
     # Main loop of this game
     while len(empty_cells(board)) > 0 and not game_over(board):
-        if first == 'N':
-            ai_turn(c_choice, h_choice)
-            first = ''
+        gameScreen.fill((255, 255, 255))
+        graphicalBoard.draw()
 
-        human_turn(c_choice, h_choice)
-        ai_turn(c_choice, h_choice)
+        for event in pygame.event.get():
+            event_type = event.type
+
+            buttons = pygame.mouse.get_pressed()
+            mouse_pos = pygame.mouse.get_pos()
+
+            if event_type == pygame.QUIT:
+                pygame.quit()
+                quit()
+
+            if event_type == pygame.MOUSEBUTTONDOWN:
+                if buttons[0]:  # Left click
+                    play = graphicalBoard.in_range_of(mouse_pos)
+                    if play >= 0:
+                        coords = index_to_coord(play)
+                        set_move(coords[1], coords[0], HUMAN)
+                        graphicalBoard.render_board(h_choice, c_choice)
+                        graphicalBoard.draw()
+                        render(board, c_choice, h_choice)
+                        ai_turn(c_choice, h_choice)
+                        render(board, c_choice, h_choice)
 
     # Game over message
     if wins(board, HUMAN):
