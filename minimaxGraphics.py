@@ -95,7 +95,7 @@ class Board:
     def __init__(self):
         #   X   Y
         # X  Y
-        self.area = pygame.Rect(50, 50,  ## Coord
+        self.area = pygame.Rect(0, 0,  ## Coord
                                 300, 300)  ## Size
 
         self.piecePositions = []
@@ -106,23 +106,25 @@ class Board:
                 self.piecePositions.append(circle(circle_x, circle_y, circle_radius))
 
     def render_board(self, h_choice, c_choice):
-        index = 0
+        y = 0
         for i in board:
+            x = 0
             for j in i:
                 clr = ()
                 if j == -1:
                     clr = self.humanColor
                     print("if human")
                 elif j == 1:
-
                     clr = self.aiColor
                     print("if comp")
                 else:
                     clr = (255, 255, 255)
-                print(clr)
+                index = y + x * 4 
                 self.piecePositions[index].color = clr
                 print(self.piecePositions[index].color)
-                index = index + 1
+                x += 1
+            y += 1
+
 
     def draw(self):
         pygame.draw.rect(gameScreen, (0, 0, 0), self.area)
@@ -140,7 +142,6 @@ class Board:
 
     def set_player_color(self, p):
         self.__humanChar = p
-
         if p == "R":
             self.__aiChar = "B"
             self.humanColor = (255, 0, 0)
@@ -163,9 +164,9 @@ board = [
 ]
 graphicalBoard: Board = Board()
 
+frozenGame = False
 
-
-gameScreen = pygame.display.set_mode((1024, 600))
+gameScreen = pygame.display.set_mode((300, 300))
 
 
 def evaluate(state):
@@ -344,7 +345,7 @@ def ai_turn(c_choice, h_choice):
     if depth == 0 or game_over(board):
         return
 
-    clean()
+    #clean()
     print(f'Computer turn [{c_choice}]')
 
 
@@ -380,7 +381,7 @@ def human_turn(c_choice, h_choice):
         13: [3, 0], 14: [3, 1], 15: [3, 2], 16: [3, 3],
     }
 
-    clean()
+    #clean()
     print(f'Human turn [{h_choice}]')
     render(board, c_choice, h_choice)
 
@@ -484,12 +485,17 @@ def main():
                     play = graphicalBoard.in_range_of(mouse_pos)
                     if play >= 0:
                         coords = index_to_coord(play)
-                        set_move(coords[1], coords[0], HUMAN)
-                        graphicalBoard.render_board(h_choice, c_choice)
-                        graphicalBoard.draw()
-                        render(board, c_choice, h_choice)
-                        ai_turn(c_choice, h_choice)
-                        render(board, c_choice, h_choice)
+                        if valid_move(coords[1], coords[0]):
+                            render(board, c_choice, h_choice)
+                            set_move(coords[1], coords[0], HUMAN)
+                            render(board, c_choice, h_choice)
+                            graphicalBoard.render_board(h_choice, c_choice)
+                            graphicalBoard.draw()
+                            ai_turn(c_choice, h_choice)
+                            render(board, c_choice, h_choice)
+                            graphicalBoard.render_board(h_choice, c_choice)
+                        else:
+                            print('please make a valid move')
 
     # Game over message
     if wins(board, HUMAN):
